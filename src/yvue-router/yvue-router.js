@@ -8,7 +8,6 @@ class VueRouter {
   constructor(options) {
     this.options = options;
     
-    const getHash = () => window.location.hash.slice(1) || "/"
     // 数据响应式，current必须是响应式的，这样他变化，使用它的组件就会重新render
     // 如何造一个响应式数据
     // 方式1：借鸡生蛋 - new Vue({data: {current: '/'}})
@@ -16,13 +15,44 @@ class VueRouter {
     Vue.util.defineReactive(
       this,
       "current",
-      getHash()
+      this.getHash()
     );
+    Vue.util.defineReactive(this, 'matched', [])
+    this.match()
     
     // 监控url变化
-    window.addEventListener('hashchange', () => {
-      this.current = getHash()
-    })
+    window.addEventListener('hashchange', this.onHashchange.bind(this))
+    window.addEventListener('load', this.onHashchange.bind(this))
+  }
+  
+  getHash() {
+    return window.location.hash.slice(1) || "/"
+  }
+  
+  onHashchange() {
+    this.current = this.getHash()
+    this.matched = []
+    this.match()
+  }
+  
+  match(routes) {
+    routes = routes || this.options.routes
+    // 递归遍历
+    for (const route of routes) {
+      const {path} = route
+      const {current} = this
+      if (path === '/' && current === '/') {
+        this.matched.push(route)
+        return
+      }
+      if (path !== '/' && current.indexOf(path) > -1) {
+        this.matched.push(route)
+        if (route.children && route.children.length > 0) {
+          this.match(route.children)
+        }
+        return
+      }
+    }
   }
 }
 
@@ -36,6 +66,7 @@ VueRouter.install = function (_Vue) {
       // 仅在根组件创建时执行一次
       if (this.$options.router) {
         Vue.prototype.$router = this.$options.router
+        console.log(this.$options.router);
       }
     }
   })
