@@ -1,3 +1,6 @@
+import View from "./components/view";
+import Link from "./components/link";
+
 let Vue
 
 //1.实现插件
@@ -33,58 +36,13 @@ VueRouter.install = function (_Vue) {
       // 仅在根组件创建时执行一次
       if (this.$options.router) {
         Vue.prototype.$router = this.$options.router
-        findCurrentRoute(this)
       }
     }
   })
-  
-  const findCurrentRoute = (_this) => {
-    const {options, current} = _this.$router
-    const currentRoute = options.routes.find(route => route.path === current)
-    Vue.prototype.$route = currentRoute
-    return currentRoute
-  }
   
   // 全局注册router-view  router-link
-  Vue.component('router-view', {
-    // url => component
-    // url
-    // window.location.hash
-    // router: this.$router
-    render(h) {
-      let component = null
-      component = findCurrentRoute(this).component
-      return h(component)
-    }
-  })
-  Vue.component('router-link', {
-    props: {
-      to: {
-        type: String,
-        required: true,
-      }
-    },
-    render(h) {
-    // router-link-exact-active router-link-active
-      const {to} = this
-      let className = 'router-link-active'
-      let activeClassName = 'router-link-exact-active'
-      const {current} = this.$router
-      if (to === current) {
-        className += ` ${activeClassName}`
-      }
-      
-      return h('a',
-        {
-          attrs: {
-            href: `#${to}`,
-            class: className
-          }
-        },
-        this.$slots.default)
-    }
-    
-  })
+  Vue.component('router-view', View)
+  Vue.component('router-link', Link)
 }
 
 export default VueRouter
