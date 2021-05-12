@@ -1,9 +1,9 @@
 import Vue from 'vue'
-import Vuex from 'vuex'
+import Vuex from './yvuex.js'
 
 Vue.use(Vuex)
 
-export default new Vuex.Store({
+const store = new Vuex.Store({
   state: {
     counter: 0
   },
@@ -19,6 +19,7 @@ export default new Vuex.Store({
       }, 1000);
     }
   },
-  modules: {
-  }
+  modules: {}
 })
+
+export default store
