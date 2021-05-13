@@ -2,9 +2,13 @@ function defineReactive(obj, key, value) {
   // 如果value是个对象，需要递归处理
   observe(value)
   
+  // 创建Dep实例
+  const dep = new Dep()
   
   Object.defineProperty(obj, key, {
     get() {
+      // 依赖收集
+      Dep.target && dep.addDep(Dep.target)
       return value
     },
     set(newValue) {
@@ -12,6 +16,9 @@ function defineReactive(obj, key, value) {
         value = newValue
         // 新值如果是对象，仍然需要递归遍历处理
         observe(newValue);
+        
+        // 通知更新
+        dep.notify()
       }
     }
   })
@@ -101,6 +108,16 @@ class Compile {
     })
   }
   
+  update(node, exp, dir) {
+    // 1.init
+    const fn = this[dir + 'Updater']
+    fn && fn(node, this.$vm[exp])
+    
+    // 2.update
+    new Watcher(this.$vm, exp, val => {
+      fn && fn(node, val)
+    })
+  }
   
   // 是否为元素
   isElement(n) {
@@ -118,7 +135,7 @@ class Compile {
   
   // 编译插值文本 {{ooxx}}
   compileInter(n) {
-    n.textContent = this.$vm[RegExp.$1]
+    this.update(n, RegExp.$1, 'text')
   }
   
   //编译元素：遍历它的所有特性，看是否k-开头指令，或者@事件
@@ -138,13 +155,56 @@ class Compile {
   
   // 文本
   text(n, exp) {
-    n.textContent = this.$vm[exp]
+    this.update(n, exp, 'text')
+  }
+  
+  textUpdater(n, val) {
+    n.textContent = val
   }
   
   // html
   html(n, exp) {
-    n.innerHTML = this.$vm[exp]
+    this.update(n, exp, 'html')
+  }
+  
+  htmlUpdater(n, val) {
+    n.innerHTML = val
   }
   
   
+}
+
+// 负责dom更新
+class Watcher {
+  constructor(vm, key, updater) {
+    this.vm = vm
+    this.key = key
+    this.updater = updater
+    
+    // 将Watcher实例保存为一个全局变量
+    Dep.target = this
+    // 触发一下对应key的get
+    this.vm[this.key]
+    Dep.target = null
+  }
+  
+  // 将来会被Dep调用
+  update() {
+    this.updater.call(this.vm, this.vm[this.key])
+  }
+}
+
+// 保存watcher实例的依赖类
+class Dep {
+  constructor() {
+    this.deps = []
+  }
+  
+  addDep(dep) {
+    this.deps.push(dep)
+  }
+  
+  notify() {
+    this.deps.forEach(dep => dep.update())
+  }
 }
