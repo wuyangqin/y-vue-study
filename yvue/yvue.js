@@ -112,6 +112,10 @@ class Compile {
     return n.nodeType === 3 && /\{\{(.*)\}\}/.test(n.textContent)
   }
   
+  isDir(attrName) {
+    return attrName.startsWith('v-');
+  }
+  
   // 编译插值文本 {{ooxx}}
   compileInter(n) {
     n.textContent = this.$vm[RegExp.$1]
@@ -119,6 +123,28 @@ class Compile {
   
   //编译元素：遍历它的所有特性，看是否k-开头指令，或者@事件
   compileElement(n) {
+    const attrs = n.attributes
+    Array.from(attrs).forEach(attr => {
+      const attrName = attr.name
+      const exp = attr.value
+      // 指令
+      if (this.isDir(attrName)) {
+        // 执行特定指令处理函数
+        const dir = attrName.substring(2);
+        this[dir] && this[dir](n, exp);
+      }
+    })
   }
+  
+  // 文本
+  text(n, exp) {
+    n.textContent = this.$vm[exp]
+  }
+  
+  // html
+  html(n, exp) {
+    n.innerHTML = this.$vm[exp]
+  }
+  
   
 }
