@@ -6,7 +6,11 @@
 </head>
 <body>
 <div id="app">
+    <p @click="add">{{counter}}</p>
   <p>{{counter}}</p>
+    <p k-text="counter"></p>
+    <p k-html="desc"></p>
+<!--    <input type="text" k-model="desc">-->
 </div>
 <script src="./yvue.js"></script>
 
@@ -14,8 +18,14 @@
   const app = new YVue({
     el: '#app',
     data: {
-      counter: 1
-    }
+      counter: 1,
+      desc: '<span style="color:skyblue">hi</span>'
+    },
+    methods: {
+      add() {
+        this.counter++
+      }
+    },
   })
   setInterval(() => {
     app.counter++
